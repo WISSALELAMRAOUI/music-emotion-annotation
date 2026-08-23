@@ -1,0 +1,508 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #f7f5fb;
+  color: #24202d;
+}
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* =========================
+   APPLICATION
+========================= */
+
+.app {
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      circle at 80% 15%,
+      rgba(126, 87, 194, 0.12),
+      transparent 30%
+    ),
+    #f8f7fb;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header {
+  height: 78px;
+  padding: 0 7%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #ebe8f0;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #6f42c1;
+  color: white;
+  font-size: 25px;
+  font-weight: bold;
+}
+
+.logo-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.logo-subtitle {
+  color: #888292;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.research-badge {
+  padding: 8px 15px;
+  border-radius: 30px;
+  background: #f0ebfa;
+  color: #6840a5;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* =========================
+   HERO
+========================= */
+
+.hero {
+  max-width: 1180px;
+  margin: auto;
+  padding: 90px 30px 70px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 70px;
+  align-items: center;
+}
+
+.small-label {
+  color: #7044b8;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+}
+
+.small-label span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #7b4bc5;
+}
+
+.hero h1 {
+  font-size: 55px;
+  line-height: 1.08;
+  margin: 0;
+  color: #25212d;
+  letter-spacing: -1.8px;
+}
+
+.hero h1 span {
+  color: #7044b8;
+}
+
+.hero-description {
+  max-width: 620px;
+  margin-top: 25px;
+  color: #6e6878;
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-top: 35px;
+}
+
+.primary-button {
+  border: none;
+  border-radius: 12px;
+  padding: 15px 22px;
+  background: #7044b8;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 8px 20px rgba(112, 68, 184, 0.2);
+}
+
+.primary-button:hover {
+  transform: translateY(-2px);
+  background: #5e35a0;
+}
+
+.primary-button span {
+  margin-left: 15px;
+  font-size: 18px;
+}
+
+.duration {
+  color: #777180;
+  font-size: 14px;
+}
+
+.clock-icon {
+  margin-right: 6px;
+  font-size: 18px;
+}
+
+/* =========================
+   MUSIC VISUAL
+========================= */
+
+.music-visual {
+  height: 390px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid #ded4ec;
+}
+
+.circle-1 {
+  width: 360px;
+  height: 360px;
+}
+
+.circle-2 {
+  width: 280px;
+  height: 280px;
+}
+
+.circle-3 {
+  width: 200px;
+  height: 200px;
+}
+
+.music-card {
+  position: relative;
+  width: 280px;
+  padding: 25px;
+  border-radius: 22px;
+  background: white;
+  box-shadow: 0 25px 60px rgba(54, 39, 76, 0.16);
+}
+
+.music-card-top {
+  display: flex;
+  justify-content: space-between;
+  color: #7044b8;
+  font-size: 25px;
+}
+
+.music-status {
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding-top: 7px;
+}
+
+.waveform {
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.waveform i {
+  width: 5px;
+  border-radius: 5px;
+  background: #7044b8;
+}
+
+.waveform i:nth-child(1) { height: 25px; }
+.waveform i:nth-child(2) { height: 45px; }
+.waveform i:nth-child(3) { height: 65px; }
+.waveform i:nth-child(4) { height: 35px; }
+.waveform i:nth-child(5) { height: 75px; }
+.waveform i:nth-child(6) { height: 50px; }
+.waveform i:nth-child(7) { height: 85px; }
+.waveform i:nth-child(8) { height: 45px; }
+.waveform i:nth-child(9) { height: 70px; }
+.waveform i:nth-child(10) { height: 40px; }
+.waveform i:nth-child(11) { height: 60px; }
+.waveform i:nth-child(12) { height: 30px; }
+.waveform i:nth-child(13) { height: 55px; }
+.waveform i:nth-child(14) { height: 40px; }
+.waveform i:nth-child(15) { height: 25px; }
+
+.music-time {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #999;
+}
+
+.play-button {
+  width: 55px;
+  height: 55px;
+  border-radius: 50%;
+  background: #7044b8;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px auto 0;
+}
+
+/* =========================
+   FEATURES
+========================= */
+
+.features {
+  max-width: 1180px;
+  margin: auto;
+  padding: 0 30px 55px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.feature-card {
+  display: flex;
+  gap: 16px;
+  padding: 23px;
+  background: white;
+  border: 1px solid #eeeaf3;
+  border-radius: 16px;
+}
+
+.feature-icon {
+  width: 45px;
+  height: 45px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1ebfa;
+  border-radius: 12px;
+  font-size: 21px;
+}
+
+.feature-card h3 {
+  margin: 0 0 7px;
+  font-size: 16px;
+}
+
+.feature-card p {
+  margin: 0;
+  color: #7d7785;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  border-top: 1px solid #ebe8f0;
+  color: #918b99;
+  font-size: 12px;
+}
+
+/* =========================
+   PARTICIPANT
+========================= */
+
+.participant-page {
+  min-height: 100vh;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e6e2eb;
+  color: #888;
+  font-size: 13px;
+}
+
+.step.active {
+  background: #7044b8;
+  color: white;
+}
+
+.line {
+  width: 55px;
+  height: 2px;
+  background: #ded9e4;
+}
+
+.participant-card,
+.audio-card {
+  width: 100%;
+  max-width: 600px;
+  background: white;
+  border-radius: 22px;
+  padding: 45px;
+  box-shadow: 0 20px 50px rgba(50, 35, 70, 0.1);
+}
+
+.participant-icon {
+  width: 55px;
+  height: 55px;
+  margin: auto auto 20px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1ebfa;
+  font-size: 25px;
+}
+
+.center {
+  justify-content: center;
+}
+
+.participant-card h1,
+.audio-card h1 {
+  text-align: center;
+  margin: 0;
+  font-size: 32px;
+}
+
+.participant-description {
+  text-align: center;
+  color: #777180;
+  line-height: 1.7;
+  margin: 15px 0 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid #ddd8e4;
+  border-radius: 10px;
+  font-size: 15px;
+  background: white;
+  outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #7044b8;
+}
+
+.full {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.audio-card {
+  text-align: center;
+}
+
+.audio-card p {
+  color: #777180;
+  margin: 15px 0 30px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 850px) {
+
+  .hero {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .small-label {
+    justify-content: center;
+  }
+
+  .hero-description {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .hero-actions {
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .features {
+    grid-template-columns: 1fr;
+  }
+
+  .music-visual {
+    margin-top: 20px;
+  }
+
+  .hero h1 {
+    font-size: 42px;
+  }
+
+  .header {
+    padding: 0 25px;
+  }
+
+  .research-badge {
+    display: none;
+  }
+}
