@@ -506,3 +506,472 @@ select {
     display: none;
   }
 }
+/* =========================
+   AUDIO PLAYER
+========================= */
+
+.audio-player {
+  margin-top: 30px;
+  padding: 22px;
+  border-radius: 18px;
+  background: #f7f4fb;
+  border: 1px solid #ebe5f4;
+  text-align: left;
+}
+
+.audio-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 13px;
+  background: #7044b8;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  margin-bottom: 15px;
+}
+
+.audio-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #292331;
+}
+
+.audio-subtitle {
+  color: #8a8492;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.audio-player audio {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.annotation-button {
+  margin-top: 25px;
+}
+/* =========================
+   ANNOTATION PAGE
+========================= */
+
+.annotation-page {
+  min-height: 100vh;
+  padding: 45px 20px 70px;
+  background:
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(126, 87, 194, 0.10),
+      transparent 30%
+    ),
+    #f8f7fb;
+}
+
+
+/* =========================
+   PROGRESS
+========================= */
+
+.annotation-progress {
+  max-width: 850px;
+  margin: 0 auto 30px;
+}
+
+.progress-text {
+  text-align: center;
+  color: #777180;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.progress-text strong {
+  color: #7044b8;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #e7e2ed;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 1%;
+  height: 100%;
+  background: #7044b8;
+  border-radius: 10px;
+}
+
+
+/* =========================
+   AUDIO SECTION
+========================= */
+
+.audio-section {
+  max-width: 850px;
+  margin: 0 auto 25px;
+  padding: 38px 45px;
+  background: white;
+  border-radius: 22px;
+  box-shadow: 0 15px 45px rgba(50, 35, 70, 0.08);
+  text-align: center;
+}
+
+.audio-section h1 {
+  margin: 0;
+  font-size: 32px;
+  color: #292331;
+}
+
+.audio-instruction {
+  max-width: 650px;
+  margin: 12px auto 25px;
+  color: #777180;
+  line-height: 1.6;
+}
+
+.audio-section .audio-player {
+  text-align: left;
+}
+
+.relisten-message {
+  margin: 18px 0 0;
+  color: #8a8492;
+  font-size: 13px;
+}
+
+
+/* =========================
+   ANNOTATION SECTION
+========================= */
+
+.annotation-section {
+  max-width: 850px;
+  margin: 0 auto;
+}
+
+.annotation-header {
+  text-align: center;
+  margin: 35px 0 25px;
+}
+
+.annotation-header .small-label {
+  justify-content: center;
+}
+
+.annotation-header h2 {
+  margin: 0;
+  font-size: 30px;
+  color: #292331;
+}
+
+.annotation-header p {
+  max-width: 650px;
+  margin: 12px auto;
+  color: #777180;
+  line-height: 1.6;
+}
+
+
+/* =========================
+   QUESTION CARD
+========================= */
+
+.question-card {
+  display: flex;
+  gap: 20px;
+  padding: 30px;
+  margin-bottom: 18px;
+  background: white;
+  border: 1px solid #ebe7f1;
+  border-radius: 18px;
+  box-shadow: 0 8px 25px rgba(50, 35, 70, 0.05);
+}
+
+.question-number {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #f0eafa;
+  color: #7044b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.question-content {
+  width: 100%;
+}
+
+.question-content h3 {
+  margin: 3px 0 8px;
+  font-size: 18px;
+  color: #292331;
+}
+
+.question-help {
+  margin: 0 0 25px;
+  color: #888290;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+
+/* =========================
+   SCALE
+========================= */
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+  color: #777180;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.scale {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+}
+
+.scale-button {
+  height: 48px;
+  border: 1px solid #ddd7e6;
+  border-radius: 10px;
+  background: white;
+  color: #514b59;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.scale-button:hover {
+  border-color: #7044b8;
+  color: #7044b8;
+  transform: translateY(-2px);
+}
+
+.scale-button.selected {
+  background: #7044b8;
+  border-color: #7044b8;
+  color: white;
+  box-shadow: 0 6px 15px rgba(112, 68, 184, 0.25);
+  transform: translateY(-2px);
+}
+
+
+/* =========================
+   ANNOTATION BUTTON
+========================= */
+
+.annotation-button {
+  margin-top: 15px;
+  min-height: 55px;
+}
+
+.annotation-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.selection-message {
+  text-align: center;
+  color: #7044b8;
+  font-size: 13px;
+  margin-top: 14px;
+}
+
+
+/* =========================
+   RESPONSIVE ANNOTATION
+========================= */
+
+@media (max-width: 650px) {
+
+  .annotation-page {
+    padding: 25px 12px 50px;
+  }
+
+  .audio-section {
+    padding: 28px 20px;
+  }
+
+  .question-card {
+    padding: 22px 18px;
+  }
+
+  .question-number {
+    display: none;
+  }
+
+  .annotation-header h2 {
+    font-size: 25px;
+  }
+
+  .scale {
+    gap: 4px;
+  }
+
+  .scale-button {
+    height: 42px;
+    font-size: 13px;
+  }
+
+  .scale-labels {
+    font-size: 10px;
+  }
+}
+/* =========================
+   CHOIX / BOUTONS QUESTIONS
+========================= */
+
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.choice-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.choice-grid.four {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+
+/* Bouton de choix */
+
+.choice-button {
+  min-height: 75px;
+  padding: 14px 16px;
+
+  border: 1px solid #ddd7e6;
+  border-radius: 14px;
+
+  background: white;
+  color: #514b59;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+
+  font-size: 15px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+
+/* Survol */
+
+.choice-button:hover {
+  border-color: #7044b8;
+  background: #faf7ff;
+  color: #7044b8;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 6px 15px rgba(112, 68, 184, 0.10);
+}
+
+
+/* Bouton sélectionné */
+
+.choice-button.selected {
+  background: #7044b8;
+  border-color: #7044b8;
+  color: white;
+
+  box-shadow: 0 7px 18px rgba(112, 68, 184, 0.25);
+
+  transform: translateY(-2px);
+}
+
+
+/* Survol d'un bouton déjà sélectionné */
+
+.choice-button.selected:hover {
+  background: #6339a8;
+  border-color: #6339a8;
+  color: white;
+}
+
+
+/* Icônes */
+
+.choice-icon {
+  font-size: 25px;
+  line-height: 1;
+}
+
+
+/* Texte principal */
+
+.choice-button strong {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+
+/* Petit texte explicatif */
+
+.choice-button small {
+  color: #888290;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+
+/* Petit texte quand le bouton est sélectionné */
+
+.choice-button.selected small {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+
+/* =========================
+   RESPONSIVE CHOIX
+========================= */
+
+@media (max-width: 650px) {
+
+  .choice-grid,
+  .choice-grid.three,
+  .choice-grid.four {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .choice-button {
+    min-height: 70px;
+    padding: 12px 10px;
+    font-size: 14px;
+  }
+
+  .choice-icon {
+    font-size: 22px;
+  }
+
+  .choice-button small {
+    font-size: 11px;
+  }
+}
