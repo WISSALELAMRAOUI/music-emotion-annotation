@@ -1,19 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 /* =========================================================
-   CONFIGURATION DES AUDIOS
+   CONFIGURATION BACKEND
    ========================================================= */
 
-const AUDIO_FILES = Array.from({ length: 100 }, (_, index) => {
-  const number = String(index).padStart(5, "0");
-
-  return {
-    id: `andalusian.${number}`,
-    file: `/audio/andalusian.${number}.wav`,
-    number: index + 1,
-  };
-});
+const BACKEND_URL = "http://127.0.0.1:5000";
 
 
 /* =========================================================
@@ -22,15 +14,16 @@ const AUDIO_FILES = Array.from({ length: 100 }, (_, index) => {
 
 function App() {
 
-  /* -------------------------------------------------------
+  /* =======================================================
      NAVIGATION
-  ------------------------------------------------------- */
+     ======================================================= */
 
   const [page, setPage] = useState("welcome");
 
-  /* -------------------------------------------------------
-     INFORMATIONS PARTICIPANT
-  ------------------------------------------------------- */
+
+  /* =======================================================
+     PARTICIPANT
+     ======================================================= */
 
   const [participant, setParticipant] = useState({
     age: "",
@@ -39,17 +32,30 @@ function App() {
     culturalFamiliarity: "",
   });
 
+  // ID généré par le backend
+  const [participantId, setParticipantId] = useState(null);
 
-  /* -------------------------------------------------------
-     AUDIO ACTUEL
-  ------------------------------------------------------- */
+  const [participantLoading, setParticipantLoading] = useState(false);
+
+  const [participantError, setParticipantError] = useState("");
+
+
+  /* =======================================================
+     AUDIOS
+     ======================================================= */
+
+  const [audioFiles, setAudioFiles] = useState([]);
 
   const [currentAudio, setCurrentAudio] = useState(0);
 
+  const [loadingAudios, setLoadingAudios] = useState(true);
 
-  /* -------------------------------------------------------
+  const [audioError, setAudioError] = useState("");
+
+
+  /* =======================================================
      ANNOTATION
-  ------------------------------------------------------- */
+     ======================================================= */
 
   const [annotation, setAnnotation] = useState({
     valence: null,
@@ -62,32 +68,129 @@ function App() {
   });
 
 
-  /* -------------------------------------------------------
-     RESULTATS
-  ------------------------------------------------------- */
+  /* =======================================================
+     CHARGER LES AUDIOS
+     
+     IMPORTANT :
+     Le dossier physique est :
+     
+     backend/audio/
+     
+     Mais l'API Flask est :
+     
+     GET /api/audios
+     
+     ======================================================= */
 
-  const [annotations, setAnnotations] = useState([]);
+  useEffect(() => {
+
+    const loadAudios = async () => {
+
+      try {
+
+        setLoadingAudios(true);
+        setAudioError("");
+
+        const response = await fetch(
+          `${BACKEND_URL}/api/audios`
+        );
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Erreur HTTP : ${response.status}`
+          );
+
+        }
+
+        const data = await response.json();
+
+        console.log(
+          "AUDIOS RECUS DU BACKEND :",
+          data
+        );
+
+
+        /*
+         * Le backend retourne par exemple :
+         *
+         * {
+         *   id: "andalusian.00000",
+         *   file: "andalusian.00000.wav",
+         *   number: 1,
+         *   url: "/api/audio/andalusian.00000.wav"
+         * }
+         */
+
+        const formattedAudios = data.map((audio) => ({
+
+          id: audio.id,
+
+          file: `${BACKEND_URL}${audio.url}`,
+
+          number: audio.number,
+
+        }));
+
+
+        setAudioFiles(formattedAudios);
+
+      } catch (error) {
+
+        console.error(
+          "Erreur lors du chargement des audios :",
+          error
+        );
+
+        setAudioError(
+          "Impossible de charger les extraits audio depuis le serveur."
+        );
+
+      } finally {
+
+        setLoadingAudios(false);
+
+      }
+
+    };
+
+
+    loadAudios();
+
+  }, []);
 
 
   /* =======================================================
-     FONCTIONS
-  ======================================================= */
+     FONCTIONS PARTICIPANT
+     ======================================================= */
 
   const updateParticipant = (field, value) => {
+
     setParticipant((previous) => ({
       ...previous,
       [field]: value,
     }));
+
   };
 
 
+  /* =======================================================
+     FONCTIONS ANNOTATION
+     ======================================================= */
+
   const updateAnnotation = (field, value) => {
+
     setAnnotation((previous) => ({
       ...previous,
       [field]: value,
     }));
+
   };
 
+
+  /* =======================================================
+     VALIDATION PARTICIPANT
+     ======================================================= */
 
   const isParticipantComplete =
     participant.age !== "" &&
@@ -95,6 +198,131 @@ function App() {
     participant.musicFamiliarity !== "" &&
     participant.culturalFamiliarity !== "";
 
+
+  /* =======================================================
+     CREER LE PARTICIPANT
+     
+     Cette fonction est appelée lorsque l'utilisateur
+     clique sur "Continuer".
+     
+     Le backend crée un ID réel :
+     
+     PXXXXXXXX
+     
+     ======================================================= */
+
+  const createParticipant = async () => {
+
+    if (!isParticipantComplete) {
+      return;
+    }
+
+    try {
+
+      setParticipantLoading(true);
+      setParticipantError("");
+
+
+      const participantData = {
+
+        age: Number(participant.age),
+
+        gender: participant.gender,
+
+        music_familiarity:
+          participant.musicFamiliarity,
+
+        cultural_familiarity:
+          participant.culturalFamiliarity,
+
+      };
+
+
+      console.log(
+        "PARTICIPANT ENVOYE AU BACKEND :",
+        participantData
+      );
+
+
+      const response = await fetch(
+        `${BACKEND_URL}/api/participants`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(participantData),
+
+        }
+      );
+
+
+      const data = await response.json();
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          data.error ||
+          `Erreur HTTP : ${response.status}`
+        );
+
+      }
+
+
+      console.log(
+        "PARTICIPANT CREE :",
+        data
+      );
+
+
+      /*
+       * Le backend retourne :
+       *
+       * {
+       *   message: "Participant enregistré.",
+       *   participant_id: "PXXXXXXXX"
+       * }
+       */
+
+      setParticipantId(
+        data.participant_id
+      );
+
+
+      /*
+       * Aller à la page des audios
+       */
+
+      setPage("audio");
+
+
+    } catch (error) {
+
+      console.error(
+        "Erreur lors de la création du participant :",
+        error
+      );
+
+      setParticipantError(
+        error.message ||
+        "Impossible d'enregistrer le participant."
+      );
+
+    } finally {
+
+      setParticipantLoading(false);
+
+    }
+
+  };
+
+
+  /* =======================================================
+     VALIDATION ANNOTATION
+     ======================================================= */
 
   const isAnnotationComplete =
     annotation.valence !== null &&
@@ -106,99 +334,217 @@ function App() {
     annotation.attention !== "";
 
 
-  /* -------------------------------------------------------
+  /* =======================================================
      VALIDATION D'UNE ANNOTATION
-  ------------------------------------------------------- */
+     ======================================================= */
 
-  const validateAnnotation = () => {
+  const validateAnnotation = async () => {
 
     if (!isAnnotationComplete) {
       return;
     }
 
-    const audio = AUDIO_FILES[currentAudio];
+
+    if (audioFiles.length === 0) {
+      return;
+    }
+
+
+    if (!participantId) {
+
+      alert(
+        "Le participant n'a pas été enregistré."
+      );
+
+      return;
+
+    }
+
+
+    const audio =
+      audioFiles[currentAudio];
+
+
+    /* =====================================================
+       DONNEES DE L'ANNOTATION
+       ===================================================== */
 
     const result = {
-      participant_id: "P001",
 
-      /* Informations participant */
-      age: Number(participant.age),
-      gender: participant.gender,
-      music_familiarity: participant.musicFamiliarity,
-      cultural_familiarity: participant.culturalFamiliarity,
+      participant_id:
+        participantId,
 
-      /* Identification de l'extrait */
-      audio_id: audio.id,
-      audio_number: audio.number,
+      age:
+        Number(participant.age),
 
-      /* Variables émotionnelles */
-      valence: annotation.valence,
-      arousal: annotation.arousal,
+      gender:
+        participant.gender,
 
-      /* Autres annotations */
-      emotion: annotation.emotion,
-      cultural_nostalgia: annotation.nostalgia,
-      preferred_time: annotation.moment,
-      tempo_mizan: annotation.tempo,
-      attention_element: annotation.attention,
+      music_familiarity:
+        participant.musicFamiliarity,
+
+      cultural_familiarity:
+        participant.culturalFamiliarity,
+
+      audio_id:
+        audio.id,
+
+      audio_number:
+        audio.number,
+
+      valence:
+        annotation.valence,
+
+      arousal:
+        annotation.arousal,
+
+      emotion:
+        annotation.emotion,
+
+      cultural_nostalgia:
+        annotation.nostalgia,
+
+      preferred_time:
+        annotation.moment,
+
+      tempo_mizan:
+        annotation.tempo,
+
+      attention_element:
+        annotation.attention,
+
     };
 
 
-    /* Ajouter l'annotation au dataset local */
-
-    setAnnotations((previous) => [
-      ...previous,
-      result,
-    ]);
+    console.log(
+      "ANNOTATION PREPAREE :",
+      result
+    );
 
 
-    console.log("ANNOTATION ENREGISTRÉE :", result);
+    /* =====================================================
+       ENVOYER L'ANNOTATION AU BACKEND
+       ===================================================== */
+
+    try {
+
+      const response = await fetch(
+        `${BACKEND_URL}/api/annotations`,
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify(result),
+
+        }
+      );
 
 
-    /* ---------------------------------------------------
-       AUDIO SUIVANT
-    --------------------------------------------------- */
+      const data = await response.json();
 
-    if (currentAudio < AUDIO_FILES.length - 1) {
 
-      setCurrentAudio((previous) => previous + 1);
+      if (!response.ok) {
 
-      /* Réinitialiser uniquement les réponses de l'audio */
+        throw new Error(
+          data.error ||
+          `Erreur HTTP : ${response.status}`
+        );
+
+      }
+
+
+      console.log(
+        "ANNOTATION ENREGISTREE :",
+        data
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        "Erreur lors de l'enregistrement :",
+        error
+      );
+
+      alert(
+        error.message ||
+        "Erreur lors de l'enregistrement de votre réponse."
+      );
+
+      return;
+
+    }
+
+
+    /* =====================================================
+       PASSER A L'AUDIO SUIVANT
+       ===================================================== */
+
+    if (
+      currentAudio <
+      audioFiles.length - 1
+    ) {
+
+      setCurrentAudio(
+        (previous) => previous + 1
+      );
+
+
+      /* Réinitialiser les réponses */
 
       setAnnotation({
+
         valence: null,
+
         arousal: null,
+
         emotion: "",
+
         nostalgia: "",
+
         moment: "",
+
         tempo: "",
+
         attention: "",
+
       });
 
+
       window.scrollTo({
+
         top: 0,
+
         behavior: "smooth",
+
       });
+
 
     } else {
 
-      /* Tous les audios sont terminés */
+      /*
+       * Tous les audios sont terminés
+       */
 
       setPage("finished");
+
     }
+
   };
 
 
   /* =======================================================
      PAGE ACCUEIL
-  ======================================================= */
+     ======================================================= */
 
   if (page === "welcome") {
 
     return (
-      <div className="app">
 
-        {/* HEADER */}
+      <div className="app">
 
         <header className="header">
 
@@ -229,8 +575,6 @@ function App() {
 
         </header>
 
-
-        {/* HERO */}
 
         <main className="hero">
 
@@ -298,8 +642,6 @@ function App() {
           </div>
 
 
-          {/* VISUAL */}
-
           <div className="music-visual">
 
             <div className="circle circle-1"></div>
@@ -326,9 +668,13 @@ function App() {
 
               <div className="waveform">
 
-                {[...Array(15)].map((_, index) => (
-                  <i key={index}></i>
-                ))}
+                {[...Array(15)].map(
+                  (_, index) => (
+
+                    <i key={index}></i>
+
+                  )
+                )}
 
               </div>
 
@@ -356,8 +702,6 @@ function App() {
 
         </main>
 
-
-        {/* FEATURES */}
 
         <section className="features">
 
@@ -437,13 +781,15 @@ function App() {
         </footer>
 
       </div>
+
     );
+
   }
 
 
   /* =======================================================
-     PAGE INFORMATIONS PARTICIPANT
-  ======================================================= */
+     PAGE PARTICIPANT
+     ======================================================= */
 
   if (page === "participant") {
 
@@ -482,9 +828,7 @@ function App() {
 
 
             <div className="small-label center">
-
               AVANT DE COMMENCER
-
             </div>
 
 
@@ -502,7 +846,9 @@ function App() {
             </p>
 
 
-            {/* ÂGE */}
+            {/* =================================================
+                AGE
+            ================================================= */}
 
             <div className="form-group">
 
@@ -517,14 +863,19 @@ function App() {
                 value={participant.age}
                 placeholder="Ex. 25"
                 onChange={(e) =>
-                  updateParticipant("age", e.target.value)
+                  updateParticipant(
+                    "age",
+                    e.target.value
+                  )
                 }
               />
 
             </div>
 
 
-            {/* GENRE */}
+            {/* =================================================
+                GENRE
+            ================================================= */}
 
             <div className="form-group">
 
@@ -535,7 +886,10 @@ function App() {
               <select
                 value={participant.gender}
                 onChange={(e) =>
-                  updateParticipant("gender", e.target.value)
+                  updateParticipant(
+                    "gender",
+                    e.target.value
+                  )
                 }
               >
 
@@ -564,7 +918,9 @@ function App() {
             </div>
 
 
-            {/* FAMILIARITÉ MUSIQUE */}
+            {/* =================================================
+                FAMILIARITE MUSICALE
+            ================================================= */}
 
             <div className="form-group">
 
@@ -611,7 +967,9 @@ function App() {
             </div>
 
 
-            {/* CULTURE MAROCAINE */}
+            {/* =================================================
+                CULTURE MAROCAINE
+            ================================================= */}
 
             <div className="form-group">
 
@@ -639,7 +997,7 @@ function App() {
                 </option>
 
                 <option value="bien_connue">
-                  Je la connais bien (expatrié/passionné)
+                  Je la connais bien
                 </option>
 
                 <option value="decouverte">
@@ -651,17 +1009,44 @@ function App() {
             </div>
 
 
+            {/* =================================================
+                ERREUR PARTICIPANT
+            ================================================= */}
+
+            {participantError && (
+
+              <p className="selection-message">
+
+                ⚠️ {participantError}
+
+              </p>
+
+            )}
+
+
+            {/* =================================================
+                BOUTON
+            ================================================= */}
+
             <button
               className="primary-button full"
-              disabled={!isParticipantComplete}
-              onClick={() => setPage("audio")}
+              disabled={
+                !isParticipantComplete ||
+                participantLoading
+              }
+              onClick={createParticipant}
             >
 
-              Continuer
+              {participantLoading
+                ? "Enregistrement..."
+                : "Continuer"
+              }
 
-              <span>
-                →
-              </span>
+              {!participantLoading && (
+                <span>
+                  →
+                </span>
+              )}
 
             </button>
 
@@ -670,20 +1055,106 @@ function App() {
         </main>
 
       </div>
+
     );
+
   }
 
 
   /* =======================================================
-     PAGE ANNOTATION AUDIO
-  ======================================================= */
+     PAGE AUDIO
+     ======================================================= */
 
   if (page === "audio") {
 
-    const audio = AUDIO_FILES[currentAudio];
+    /* =====================================================
+       CHARGEMENT
+    ===================================================== */
+
+    if (loadingAudios) {
+
+      return (
+
+        <div className="app">
+
+          <main className="participant-page">
+
+            <div className="participant-card">
+
+              <h1>
+                Chargement des extraits...
+              </h1>
+
+              <p className="participant-description">
+                Connexion au serveur audio en cours.
+              </p>
+
+            </div>
+
+          </main>
+
+        </div>
+
+      );
+
+    }
+
+
+    /* =====================================================
+       ERREUR
+    ===================================================== */
+
+    if (
+      audioError ||
+      audioFiles.length === 0
+    ) {
+
+      return (
+
+        <div className="app">
+
+          <main className="participant-page">
+
+            <div className="participant-card">
+
+              <div className="participant-icon">
+                ⚠️
+              </div>
+
+              <h1>
+                Erreur
+              </h1>
+
+              <p className="participant-description">
+
+                {audioError ||
+                  "Aucun extrait audio n'a été trouvé."}
+
+              </p>
+
+            </div>
+
+          </main>
+
+        </div>
+
+      );
+
+    }
+
+
+    /* =====================================================
+       AUDIO ACTUEL
+    ===================================================== */
+
+    const audio =
+      audioFiles[currentAudio];
+
 
     const progress =
-      ((currentAudio + 1) / AUDIO_FILES.length) * 100;
+      ((currentAudio + 1) /
+        audioFiles.length) *
+      100;
 
 
     return (
@@ -693,7 +1164,9 @@ function App() {
         <main className="annotation-page">
 
 
-          {/* PROGRESSION */}
+          {/* =================================================
+              PROGRESSION
+          ================================================= */}
 
           <div className="annotation-progress">
 
@@ -705,7 +1178,7 @@ function App() {
                 {audio.number}
               </strong>
 
-              {" "} / {AUDIO_FILES.length}
+              {" "} / {audioFiles.length}
 
             </div>
 
@@ -724,7 +1197,9 @@ function App() {
           </div>
 
 
-          {/* AUDIO */}
+          {/* =================================================
+              AUDIO
+          ================================================= */}
 
           <section className="audio-section">
 
@@ -739,7 +1214,9 @@ function App() {
 
               Extrait musical{" "}
 
-              {String(audio.number).padStart(2, "0")}
+              {String(
+                audio.number
+              ).padStart(2, "0")}
 
             </h1>
 
@@ -799,7 +1276,9 @@ function App() {
           </section>
 
 
-          {/* QUESTIONS */}
+          {/* =================================================
+              QUESTIONS
+          ================================================= */}
 
           <section className="annotation-section">
 
@@ -878,29 +1357,31 @@ function App() {
 
                 <div className="scale">
 
-                  {[1,2,3,4,5,6,7,8,9].map((number) => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                    (number) => (
 
-                    <button
-                      key={number}
-                      type="button"
-                      className={
-                        annotation.valence === number
-                          ? "scale-button selected"
-                          : "scale-button"
-                      }
-                      onClick={() =>
-                        updateAnnotation(
-                          "valence",
-                          number
-                        )
-                      }
-                    >
+                      <button
+                        key={number}
+                        type="button"
+                        className={
+                          annotation.valence === number
+                            ? "scale-button selected"
+                            : "scale-button"
+                        }
+                        onClick={() =>
+                          updateAnnotation(
+                            "valence",
+                            number
+                          )
+                        }
+                      >
 
-                      {number}
+                        {number}
 
-                    </button>
+                      </button>
 
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -954,29 +1435,31 @@ function App() {
 
                 <div className="scale">
 
-                  {[1,2,3,4,5,6,7,8,9].map((number) => (
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(
+                    (number) => (
 
-                    <button
-                      key={number}
-                      type="button"
-                      className={
-                        annotation.arousal === number
-                          ? "scale-button selected"
-                          : "scale-button"
-                      }
-                      onClick={() =>
-                        updateAnnotation(
-                          "arousal",
-                          number
-                        )
-                      }
-                    >
+                      <button
+                        key={number}
+                        type="button"
+                        className={
+                          annotation.arousal === number
+                            ? "scale-button selected"
+                            : "scale-button"
+                        }
+                        onClick={() =>
+                          updateAnnotation(
+                            "arousal",
+                            number
+                          )
+                        }
+                      >
 
-                      {number}
+                        {number}
 
-                    </button>
+                      </button>
 
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -1021,35 +1504,37 @@ function App() {
                     ["melancolie", "🌧️", "Mélancolie"],
                     ["excitation", "⚡", "Excitation"],
                     ["mixte", "🎭", "Émotion mixte"],
-                  ].map(([value, icon, label]) => (
+                  ].map(
+                    ([value, icon, label]) => (
 
-                    <button
-                      key={value}
-                      type="button"
-                      className={
-                        annotation.emotion === value
-                          ? "choice-button selected"
-                          : "choice-button"
-                      }
-                      onClick={() =>
-                        updateAnnotation(
-                          "emotion",
-                          value
-                        )
-                      }
-                    >
+                      <button
+                        key={value}
+                        type="button"
+                        className={
+                          annotation.emotion === value
+                            ? "choice-button selected"
+                            : "choice-button"
+                        }
+                        onClick={() =>
+                          updateAnnotation(
+                            "emotion",
+                            value
+                          )
+                        }
+                      >
 
-                      <span className="choice-icon">
-                        {icon}
-                      </span>
+                        <span className="choice-icon">
+                          {icon}
+                        </span>
 
-                      <span>
-                        {label}
-                      </span>
+                        <span>
+                          {label}
+                        </span>
 
-                    </button>
+                      </button>
 
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -1059,7 +1544,7 @@ function App() {
 
 
             {/* =================================================
-                QUESTION 04 : NOSTALGIE CULTURELLE
+                QUESTION 04 : NOSTALGIE
             ================================================= */}
 
             <div className="question-card">
@@ -1093,29 +1578,31 @@ function App() {
                     ["faible", "Faible"],
                     ["modere", "Modéré"],
                     ["tres_fort", "Très fort"],
-                  ].map(([value, label]) => (
+                  ].map(
+                    ([value, label]) => (
 
-                    <button
-                      key={value}
-                      type="button"
-                      className={
-                        annotation.nostalgia === value
-                          ? "choice-button selected"
-                          : "choice-button"
-                      }
-                      onClick={() =>
-                        updateAnnotation(
-                          "nostalgia",
-                          value
-                        )
-                      }
-                    >
+                      <button
+                        key={value}
+                        type="button"
+                        className={
+                          annotation.nostalgia === value
+                            ? "choice-button selected"
+                            : "choice-button"
+                        }
+                        onClick={() =>
+                          updateAnnotation(
+                            "nostalgia",
+                            value
+                          )
+                        }
+                      >
 
-                      {label}
+                        {label}
 
-                    </button>
+                      </button>
 
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -1145,97 +1632,60 @@ function App() {
 
                 <div className="choice-grid three">
 
-                  <button
-                    type="button"
-                    className={
-                      annotation.moment === "matin"
-                        ? "choice-button selected"
-                        : "choice-button"
-                    }
-                    onClick={() =>
-                      updateAnnotation(
-                        "moment",
-                        "matin"
-                      )
-                    }
-                  >
+                  {[
+                    [
+                      "matin",
+                      "🌅",
+                      "Le matin",
+                      "Pour stimuler le réveil et l'activité cognitive"
+                    ],
+                    [
+                      "apres_midi",
+                      "☀️",
+                      "L'après-midi",
+                      "Pour accompagner des activités ou une thérapie"
+                    ],
+                    [
+                      "soir",
+                      "🌙",
+                      "Le soir",
+                      "Pour apaiser et favoriser le repos"
+                    ],
+                  ].map(
+                    ([value, icon, label, subtitle]) => (
 
-                    <span className="choice-icon">
-                      🌅
-                    </span>
+                      <button
+                        key={value}
+                        type="button"
+                        className={
+                          annotation.moment === value
+                            ? "choice-button selected"
+                            : "choice-button"
+                        }
+                        onClick={() =>
+                          updateAnnotation(
+                            "moment",
+                            value
+                          )
+                        }
+                      >
 
-                    <strong>
-                      Le matin
-                    </strong>
+                        <span className="choice-icon">
+                          {icon}
+                        </span>
 
-                    <small>
-                      Pour stimuler le réveil
-                      et l'activité cognitive
-                    </small>
+                        <strong>
+                          {label}
+                        </strong>
 
-                  </button>
+                        <small>
+                          {subtitle}
+                        </small>
 
+                      </button>
 
-                  <button
-                    type="button"
-                    className={
-                      annotation.moment === "apres_midi"
-                        ? "choice-button selected"
-                        : "choice-button"
-                    }
-                    onClick={() =>
-                      updateAnnotation(
-                        "moment",
-                        "apres_midi"
-                      )
-                    }
-                  >
-
-                    <span className="choice-icon">
-                      ☀️
-                    </span>
-
-                    <strong>
-                      L'après-midi
-                    </strong>
-
-                    <small>
-                      Pour accompagner des activités
-                      ou une thérapie
-                    </small>
-
-                  </button>
-
-
-                  <button
-                    type="button"
-                    className={
-                      annotation.moment === "soir"
-                        ? "choice-button selected"
-                        : "choice-button"
-                    }
-                    onClick={() =>
-                      updateAnnotation(
-                        "moment",
-                        "soir"
-                      )
-                    }
-                  >
-
-                    <span className="choice-icon">
-                      🌙
-                    </span>
-
-                    <strong>
-                      Le soir
-                    </strong>
-
-                    <small>
-                      Pour apaiser et favoriser
-                      le repos
-                    </small>
-
-                  </button>
+                    )
+                  )}
 
                 </div>
 
@@ -1245,7 +1695,7 @@ function App() {
 
 
             {/* =================================================
-                QUESTION 06 : MIZAN
+                QUESTION 06 : TEMPO
             ================================================= */}
 
             <div className="question-card">
@@ -1281,37 +1731,39 @@ function App() {
                       "Très rapide / Soutenu",
                       "Insirâf"
                     ],
-                  ].map(([value, label, subtitle]) => (
+                  ].map(
+                    ([value, label, subtitle]) => (
 
-                    <button
-                      key={value}
-                      type="button"
-                      className={
-                        annotation.tempo === value
-                          ? "choice-button selected"
-                          : "choice-button"
-                      }
-                      onClick={() =>
-                        updateAnnotation(
-                          "tempo",
-                          value
-                        )
-                      }
-                    >
+                      <button
+                        key={value}
+                        type="button"
+                        className={
+                          annotation.tempo === value
+                            ? "choice-button selected"
+                            : "choice-button"
+                        }
+                        onClick={() =>
+                          updateAnnotation(
+                            "tempo",
+                            value
+                          )
+                        }
+                      >
 
-                      <strong>
-                        {label}
-                      </strong>
+                        <strong>
+                          {label}
+                        </strong>
 
-                      {subtitle && (
-                        <small>
-                          {subtitle}
-                        </small>
-                      )}
+                        {subtitle && (
+                          <small>
+                            {subtitle}
+                          </small>
+                        )}
 
-                    </button>
+                      </button>
 
-                  ))}
+                    )
+                  )}
 
                 </div>
 
@@ -1321,7 +1773,7 @@ function App() {
 
 
             {/* =================================================
-                QUESTION 07 : ELEMENT SONORE
+                QUESTION 07 : ATTENTION
             ================================================= */}
 
             <div className="question-card">
@@ -1415,8 +1867,11 @@ function App() {
               onClick={validateAnnotation}
             >
 
-              {currentAudio === AUDIO_FILES.length - 1
+              {currentAudio ===
+                audioFiles.length - 1
+
                 ? "Terminer l'étude"
+
                 : "Valider et passer à l'extrait suivant"
               }
 
@@ -1454,13 +1909,15 @@ function App() {
         </main>
 
       </div>
+
     );
+
   }
 
 
   /* =======================================================
      PAGE FIN
-  ======================================================= */
+     ======================================================= */
 
   if (page === "finished") {
 
@@ -1489,10 +1946,14 @@ function App() {
 
             <p className="participant-description">
 
-              Vous avez terminé l'annotation des
-              {AUDIO_FILES.length} extraits musicaux.
+              Vous avez terminé l'annotation des{" "}
 
-              <br /><br />
+              {audioFiles.length}
+
+              {" "}extraits musicaux.
+
+              <br />
+              <br />
 
               Vos réponses ont été enregistrées
               pour notre étude sur la perception
@@ -1507,11 +1968,17 @@ function App() {
       </div>
 
     );
+
   }
 
 
   return null;
+
 }
 
+
+/* =========================================================
+   EXPORT
+   ========================================================= */
 
 export default App;
