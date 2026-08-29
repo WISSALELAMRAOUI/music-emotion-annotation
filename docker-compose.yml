@@ -8,7 +8,14 @@ services:
       ADMIN_TOKEN: ${ADMIN_TOKEN}
     volumes:
       - ./backend:/app
-    user: "${UID:-1000}:${GID:-1000}"
+    # Le conteneur écrit database.db dans le dossier monté : il doit
+    # tourner sous le compte qui possède ./backend sur la machine hôte,
+    # sinon SQLite ne peut que lire (erreur 500 à l'enregistrement).
+    #
+    # Renseignez APP_UID / APP_GID dans .env (« id -u », « id -g »).
+    # N'utilisez pas UID/GID : ce sont des variables du shell, jamais
+    # transmises à docker compose, qui retombe toujours sur 1000.
+    user: "${APP_UID:-1000}:${APP_GID:-1000}"
     networks:
       - proxy_network
     restart: unless-stopped
