@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: music-emotion-backend
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_BACKEND_URL: http://backend:5000
+    container_name: music-emotion-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_BACKEND_URL: http://backend:5000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules

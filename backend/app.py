@@ -13,9 +13,11 @@ app = Flask(__name__)
 CORS(app)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PORT = int(os.environ.get("PORT", "5000"))
 
 DATABASE = os.path.join(BASE_DIR, "database.db")
 AUDIO_FOLDER = os.path.join(BASE_DIR, "audio")
+os.makedirs(AUDIO_FOLDER, exist_ok=True)
 
 
 
@@ -346,7 +348,7 @@ if __name__ == "__main__":
     init_database()
 
     app.run(
-        host="127.0.0.1",
-        port=5000,
-        debug=True
+        host="0.0.0.0",
+        port=PORT,
+        debug=False
     )
