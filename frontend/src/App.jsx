@@ -9,6 +9,49 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 
 /* =========================================================
+   SESSION SAUVEGARDEE
+
+   Si le participant recharge la page par accident,
+   il retrouve sa progression au lieu de tout recommencer
+   (et sans creer un second participant dans la base).
+   ========================================================= */
+
+const STORAGE_KEY = "musicemotion-session";
+
+
+const loadSession = () => {
+
+  try {
+
+    return JSON.parse(
+      localStorage.getItem(STORAGE_KEY)
+    ) || {};
+
+  } catch {
+
+    // Stockage indisponible (navigation privee, etc.)
+    return {};
+
+  }
+
+};
+
+
+const clearSession = () => {
+
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Rien a faire
+  }
+
+};
+
+
+const savedSession = loadSession();
+
+
+/* =========================================================
    APP
    ========================================================= */
 
@@ -18,7 +61,11 @@ function App() {
      NAVIGATION
      ======================================================= */
 
-  const [page, setPage] = useState("welcome");
+  const [page, setPage] = useState(
+    savedSession.participantId
+      ? "audio"
+      : "welcome"
+  );
 
 
   /* =======================================================
@@ -33,7 +80,9 @@ function App() {
   });
 
   // ID généré par le backend
-  const [participantId, setParticipantId] = useState(null);
+  const [participantId, setParticipantId] = useState(
+    savedSession.participantId || null
+  );
 
   const [participantLoading, setParticipantLoading] = useState(false);
 
@@ -46,7 +95,9 @@ function App() {
 
   const [audioFiles, setAudioFiles] = useState([]);
 
-  const [currentAudio, setCurrentAudio] = useState(0);
+  const [currentAudio, setCurrentAudio] = useState(
+    savedSession.currentAudio || 0
+  );
 
   const [loadingAudios, setLoadingAudios] = useState(true);
 
@@ -66,6 +117,10 @@ function App() {
     tempo: "",
     attention: "",
   });
+
+  const [annotationError, setAnnotationError] = useState("");
+
+  const [savingAnnotation, setSavingAnnotation] = useState(false);
 
 
   /* =======================================================
@@ -105,12 +160,6 @@ function App() {
 
         const data = await response.json();
 
-        console.log(
-          "AUDIOS RECUS DU BACKEND :",
-          data
-        );
-
-
         /*
          * Le backend retourne par exemple :
          *
@@ -135,6 +184,17 @@ function App() {
 
         setAudioFiles(formattedAudios);
 
+        /*
+         * Si la liste des extraits a changé depuis la
+         * derniere session, on repart du premier.
+         */
+
+        setCurrentAudio((previous) =>
+          previous >= formattedAudios.length
+            ? 0
+            : previous
+        );
+
       } catch (error) {
 
         console.error(
@@ -158,6 +218,33 @@ function App() {
     loadAudios();
 
   }, []);
+
+
+  /* =======================================================
+     SAUVEGARDER LA PROGRESSION
+     ======================================================= */
+
+  useEffect(() => {
+
+    if (!participantId) {
+      return;
+    }
+
+    try {
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          participantId,
+          currentAudio,
+        })
+      );
+
+    } catch {
+      // Stockage indisponible : l'etude continue quand meme.
+    }
+
+  }, [participantId, currentAudio]);
 
 
   /* =======================================================
@@ -238,12 +325,6 @@ function App() {
       };
 
 
-      console.log(
-        "PARTICIPANT ENVOYE AU BACKEND :",
-        participantData
-      );
-
-
       const response = await fetch(
         `${BACKEND_URL}/api/participants`,
         {
@@ -270,12 +351,6 @@ function App() {
         );
 
       }
-
-
-      console.log(
-        "PARTICIPANT CREE :",
-        data
-      );
 
 
       /*
@@ -345,6 +420,11 @@ function App() {
     }
 
 
+    if (savingAnnotation) {
+      return;
+    }
+
+
     if (audioFiles.length === 0) {
       return;
     }
@@ -352,8 +432,8 @@ function App() {
 
     if (!participantId) {
 
-      alert(
-        "Le participant n'a pas été enregistré."
+      setAnnotationError(
+        "Le participant n'a pas été enregistré. Veuillez recharger la page."
       );
 
       return;
@@ -373,18 +453,6 @@ function App() {
 
       participant_id:
         participantId,
-
-      age:
-        Number(participant.age),
-
-      gender:
-        participant.gender,
-
-      music_familiarity:
-        participant.musicFamiliarity,
-
-      cultural_familiarity:
-        participant.culturalFamiliarity,
 
       audio_id:
         audio.id,
@@ -416,17 +484,14 @@ function App() {
     };
 
 
-    console.log(
-      "ANNOTATION PREPAREE :",
-      result
-    );
-
-
     /* =====================================================
        ENVOYER L'ANNOTATION AU BACKEND
        ===================================================== */
 
     try {
+
+      setSavingAnnotation(true);
+      setAnnotationError("");
 
       const response = await fetch(
         `${BACKEND_URL}/api/annotations`,
@@ -456,12 +521,6 @@ function App() {
       }
 
 
-      console.log(
-        "ANNOTATION ENREGISTREE :",
-        data
-      );
-
-
     } catch (error) {
 
       console.error(
@@ -469,12 +528,16 @@ function App() {
         error
       );
 
-      alert(
+      setAnnotationError(
         error.message ||
         "Erreur lors de l'enregistrement de votre réponse."
       );
 
       return;
+
+    } finally {
+
+      setSavingAnnotation(false);
 
     }
 
@@ -514,6 +577,9 @@ function App() {
       });
 
 
+      setAnnotationError("");
+
+
       window.scrollTo({
 
         top: 0,
@@ -528,6 +594,8 @@ function App() {
       /*
        * Tous les audios sont terminés
        */
+
+      clearSession();
 
       setPage("finished");
 
@@ -1132,6 +1200,16 @@ function App() {
 
               </p>
 
+
+              <button
+                className="primary-button full"
+                onClick={() => window.location.reload()}
+              >
+
+                Réessayer
+
+              </button>
+
             </div>
 
           </main>
@@ -1175,7 +1253,7 @@ function App() {
               Extrait{" "}
 
               <strong>
-                {audio.number}
+                {currentAudio + 1}
               </strong>
 
               {" "} / {audioFiles.length}
@@ -1215,7 +1293,7 @@ function App() {
               Extrait musical{" "}
 
               {String(
-                audio.number
+                currentAudio + 1
               ).padStart(2, "0")}
 
             </h1>
@@ -1863,23 +1941,42 @@ function App() {
 
             <button
               className="primary-button annotation-button full"
-              disabled={!isAnnotationComplete}
+              disabled={
+                !isAnnotationComplete ||
+                savingAnnotation
+              }
               onClick={validateAnnotation}
             >
 
-              {currentAudio ===
-                audioFiles.length - 1
+              {savingAnnotation
 
-                ? "Terminer l'étude"
+                ? "Enregistrement..."
 
-                : "Valider et passer à l'extrait suivant"
+                : currentAudio === audioFiles.length - 1
+
+                  ? "Terminer l'étude"
+
+                  : "Valider et passer à l'extrait suivant"
               }
 
-              <span>
-                →
-              </span>
+              {!savingAnnotation && (
+                <span>
+                  →
+                </span>
+              )}
 
             </button>
+
+
+            {annotationError && (
+
+              <p className="selection-message">
+
+                ⚠️ {annotationError}
+
+              </p>
+
+            )}
 
 
             {!isAnnotationComplete && (
@@ -1960,6 +2057,37 @@ function App() {
               émotionnelle de la musique.
 
             </p>
+
+
+            {participantId && (
+
+              <p className="participant-code">
+
+                Identifiant de participation
+
+                <strong>
+                  {participantId}
+                </strong>
+
+              </p>
+
+            )}
+
+
+            <button
+              className="primary-button full"
+              onClick={() => {
+
+                clearSession();
+
+                window.location.reload();
+
+              }}
+            >
+
+              Démarrer une nouvelle participation
+
+            </button>
 
           </div>
 

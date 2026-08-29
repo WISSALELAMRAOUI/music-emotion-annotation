@@ -7,21 +7,30 @@ services:
       - "5000:5000"
     environment:
       PORT: 5000
+      # Jeton requis pour télécharger les données (à changer).
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-change-me}
     volumes:
       - ./backend:/app
+    # Le conteneur ecrit database.db dans le dossier monte :
+    # on garde l'UID de l'hote pour que le fichier reste lisible.
+    user: "${UID:-1000}:${GID:-1000}"
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./frontend
       args:
-        VITE_BACKEND_URL: http://backend:5000
+        # URL appelée par le NAVIGATEUR : "localhost", pas "backend",
+        # car le nom de service Docker n'existe pas hors du réseau Docker.
+        VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:5000}
     container_name: music-emotion-frontend
     depends_on:
       - backend
     ports:
       - "5173:5173"
     environment:
-      VITE_BACKEND_URL: http://backend:5000
+      VITE_BACKEND_URL: ${VITE_BACKEND_URL:-http://localhost:5000}
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    restart: unless-stopped

@@ -161,6 +161,15 @@ select {
   background: #5e35a0;
 }
 
+.primary-button:disabled,
+.primary-button:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+  background: #7044b8;
+  box-shadow: none;
+  transform: none;
+}
+
 .primary-button span {
   margin-left: 15px;
   font-size: 18px;
@@ -418,6 +427,27 @@ select {
   color: #777180;
   line-height: 1.7;
   margin: 15px 0 30px;
+}
+
+.participant-code {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 25px;
+  padding: 16px;
+  border-radius: 14px;
+  background: #f1ebfa;
+  color: #777180;
+  font-size: 13px;
+  text-align: center;
+}
+
+.participant-code strong {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 20px;
+  letter-spacing: 1px;
+  color: #7044b8;
 }
 
 .form-group {
