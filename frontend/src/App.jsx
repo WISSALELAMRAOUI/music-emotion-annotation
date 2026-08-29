@@ -52,6 +52,50 @@ const savedSession = loadSession();
 
 
 /* =========================================================
+   ESPACE CHERCHEUR
+
+   La page admin s'ouvre via l'adresse :
+
+     http://localhost:5173/#admin
+
+   Elle demande le mot de passe defini par ADMIN_TOKEN
+   sur le serveur.
+   ========================================================= */
+
+const ADMIN_HASH = "#admin";
+
+
+const isAdminRoute = () =>
+  window.location.hash === ADMIN_HASH;
+
+
+/* "tres_fort" -> "tres fort" */
+
+const humanize = (value) =>
+  typeof value === "string"
+    ? value.replace(/_/g, " ")
+    : value;
+
+
+/* Colonnes affichees dans le tableau des reponses */
+
+const ADMIN_COLUMNS = [
+  ["participant_id", "Participant"],
+  ["age", "Âge"],
+  ["gender", "Genre"],
+  ["audio_number", "Extrait"],
+  ["valence", "Valence"],
+  ["arousal", "Activation"],
+  ["emotion", "Émotion"],
+  ["cultural_nostalgia", "Nostalgie"],
+  ["preferred_time", "Moment"],
+  ["tempo_mizan", "Mîzân"],
+  ["attention_element", "Élément"],
+  ["created_at", "Date"],
+];
+
+
+/* =========================================================
    APP
    ========================================================= */
 
@@ -62,9 +106,11 @@ function App() {
      ======================================================= */
 
   const [page, setPage] = useState(
-    savedSession.participantId
-      ? "audio"
-      : "welcome"
+    isAdminRoute()
+      ? "admin"
+      : savedSession.participantId
+        ? "audio"
+        : "welcome"
   );
 
 
@@ -121,6 +167,25 @@ function App() {
   const [annotationError, setAnnotationError] = useState("");
 
   const [savingAnnotation, setSavingAnnotation] = useState(false);
+
+
+  /* =======================================================
+     ESPACE CHERCHEUR
+     ======================================================= */
+
+  // Le mot de passe n'est jamais stocké : il reste en mémoire
+  // le temps de la consultation.
+  const [adminToken, setAdminToken] = useState("");
+
+  const [adminInput, setAdminInput] = useState("");
+
+  const [adminError, setAdminError] = useState("");
+
+  const [adminLoading, setAdminLoading] = useState(false);
+
+  const [adminStats, setAdminStats] = useState(null);
+
+  const [adminRows, setAdminRows] = useState([]);
 
 
   /* =======================================================
@@ -245,6 +310,163 @@ function App() {
     }
 
   }, [participantId, currentAudio]);
+
+
+  /* =======================================================
+     ESPACE CHERCHEUR : RECUPERER LES REPONSES
+     ======================================================= */
+
+  const fetchAdminData = async (token) => {
+
+    setAdminLoading(true);
+    setAdminError("");
+
+    try {
+
+      const headers = {
+        "X-Admin-Token": token,
+      };
+
+      const [statsResponse, rowsResponse] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/stats`, { headers }),
+        fetch(`${BACKEND_URL}/api/annotations`, { headers }),
+      ]);
+
+
+      if (
+        statsResponse.status === 403 ||
+        rowsResponse.status === 403
+      ) {
+
+        const authError = new Error("Mot de passe incorrect.");
+
+        authError.authFailed = true;
+
+        throw authError;
+
+      }
+
+
+      if (
+        statsResponse.status === 503 ||
+        rowsResponse.status === 503
+      ) {
+
+        throw new Error(
+          "Consultation désactivée : ADMIN_TOKEN n'est pas défini sur le serveur."
+        );
+
+      }
+
+
+      if (!statsResponse.ok || !rowsResponse.ok) {
+
+        throw new Error(
+          "Impossible de récupérer les réponses."
+        );
+
+      }
+
+
+      setAdminStats(await statsResponse.json());
+
+      setAdminRows(await rowsResponse.json());
+
+      setAdminToken(token);
+
+      return true;
+
+
+    } catch (error) {
+
+      setAdminError(
+        error.message ||
+        "Impossible de contacter le serveur."
+      );
+
+
+      /* Mot de passe refusé : on repasse par le formulaire. */
+
+      if (error.authFailed) {
+
+        setAdminToken("");
+        setAdminStats(null);
+        setAdminRows([]);
+
+      }
+
+
+      return false;
+
+
+    } finally {
+
+      setAdminLoading(false);
+
+    }
+
+  };
+
+
+  const submitAdminPassword = async (event) => {
+
+    event.preventDefault();
+
+    if (!adminInput || adminLoading) {
+      return;
+    }
+
+    const connected = await fetchAdminData(adminInput);
+
+    if (connected) {
+      setAdminInput("");
+    }
+
+  };
+
+
+  const adminLogout = () => {
+
+    setAdminToken("");
+    setAdminStats(null);
+    setAdminRows([]);
+    setAdminInput("");
+    setAdminError("");
+
+  };
+
+
+  const leaveAdmin = () => {
+
+    window.location.hash = "";
+
+    setPage(
+      savedSession.participantId
+        ? "audio"
+        : "welcome"
+    );
+
+  };
+
+
+  /* Ouvrir l'espace chercheur quand l'adresse devient #admin */
+
+  useEffect(() => {
+
+    const onHashChange = () => {
+
+      if (isAdminRoute()) {
+        setPage("admin");
+      }
+
+    };
+
+    window.addEventListener("hashchange", onHashChange);
+
+    return () =>
+      window.removeEventListener("hashchange", onHashChange);
+
+  }, []);
 
 
   /* =======================================================
@@ -602,6 +824,372 @@ function App() {
     }
 
   };
+
+
+  /* =======================================================
+     PAGE ESPACE CHERCHEUR
+     ======================================================= */
+
+  if (page === "admin") {
+
+    /* -----------------------------------------------------
+       Non connecte : demander le mot de passe
+       ----------------------------------------------------- */
+
+    if (!adminToken) {
+
+      return (
+
+        <div className="app">
+
+          <main className="participant-page">
+
+            <div className="participant-card">
+
+              <div className="participant-icon">
+                🔒
+              </div>
+
+
+              <div className="small-label center">
+                ESPACE CHERCHEUR
+              </div>
+
+
+              <h1>
+                Consulter les réponses
+              </h1>
+
+
+              <p className="participant-description">
+
+                Cette page est réservée à l'équipe de recherche.
+                Saisissez le mot de passe pour accéder aux
+                données collectées.
+
+              </p>
+
+
+              <form onSubmit={submitAdminPassword}>
+
+                <div className="form-group">
+
+                  <label>
+                    Mot de passe
+                  </label>
+
+                  <input
+                    type="password"
+                    value={adminInput}
+                    placeholder="••••••••"
+                    autoFocus
+                    onChange={(e) =>
+                      setAdminInput(e.target.value)
+                    }
+                  />
+
+                </div>
+
+
+                {adminError && (
+
+                  <p className="selection-message">
+
+                    ⚠️ {adminError}
+
+                  </p>
+
+                )}
+
+
+                <button
+                  type="submit"
+                  className="primary-button full"
+                  disabled={
+                    !adminInput ||
+                    adminLoading
+                  }
+                >
+
+                  {adminLoading
+                    ? "Vérification..."
+                    : "Se connecter"
+                  }
+
+                </button>
+
+              </form>
+
+
+              <button
+                type="button"
+                className="ghost-button center-block"
+                onClick={leaveAdmin}
+              >
+
+                ← Retour à l'étude
+
+              </button>
+
+            </div>
+
+          </main>
+
+        </div>
+
+      );
+
+    }
+
+
+    /* -----------------------------------------------------
+       Connecte : tableau de bord
+       ----------------------------------------------------- */
+
+    const exportUrl = (fichier) =>
+      `${BACKEND_URL}/api/export/${fichier}` +
+      `?token=${encodeURIComponent(adminToken)}`;
+
+
+    return (
+
+      <div className="app">
+
+        <main className="admin-page">
+
+          <div className="admin-top">
+
+            <div>
+
+              <div className="small-label">
+
+                <span></span>
+
+                ESPACE CHERCHEUR
+
+              </div>
+
+              <h1>
+                Réponses collectées
+              </h1>
+
+            </div>
+
+
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={adminLogout}
+            >
+
+              Se déconnecter
+
+            </button>
+
+          </div>
+
+
+          {/* =================================================
+              CHIFFRES CLES
+          ================================================= */}
+
+          {adminStats && (
+
+            <div className="admin-stats">
+
+              <div className="admin-stat">
+
+                <strong>
+                  {adminStats.participants}
+                </strong>
+
+                <span>
+                  Participants
+                </span>
+
+              </div>
+
+
+              <div className="admin-stat">
+
+                <strong>
+                  {adminStats.annotations}
+                </strong>
+
+                <span>
+                  Réponses
+                </span>
+
+              </div>
+
+
+              <div className="admin-stat">
+
+                <strong>
+                  {adminStats.participants_ayant_termine}
+                </strong>
+
+                <span>
+                  Études terminées
+                </span>
+
+              </div>
+
+
+              <div className="admin-stat">
+
+                <strong>
+                  {adminStats.extraits}
+                </strong>
+
+                <span>
+                  Extraits
+                </span>
+
+              </div>
+
+            </div>
+
+          )}
+
+
+          {/* =================================================
+              ACTIONS
+          ================================================= */}
+
+          <div className="admin-actions">
+
+            <a
+              className="download-button"
+              href={exportUrl("annotations.csv")}
+            >
+
+              ⤓ Télécharger les réponses (CSV)
+
+            </a>
+
+
+            <a
+              className="download-button secondary"
+              href={exportUrl("participants.csv")}
+            >
+
+              ⤓ Participants (CSV)
+
+            </a>
+
+
+            <button
+              type="button"
+              className="ghost-button"
+              disabled={adminLoading}
+              onClick={() => fetchAdminData(adminToken)}
+            >
+
+              {adminLoading
+                ? "Chargement..."
+                : "↻ Actualiser"
+              }
+
+            </button>
+
+
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={leaveAdmin}
+            >
+
+              ← Retour à l'étude
+
+            </button>
+
+          </div>
+
+
+          {adminError && (
+
+            <p className="selection-message">
+
+              ⚠️ {adminError}
+
+            </p>
+
+          )}
+
+
+          {/* =================================================
+              TABLEAU DES REPONSES
+          ================================================= */}
+
+          {adminRows.length === 0 ? (
+
+            <p className="admin-empty">
+
+              Aucune réponse enregistrée pour le moment.
+
+            </p>
+
+          ) : (
+
+            <div className="admin-table-wrapper">
+
+              <table className="admin-table">
+
+                <thead>
+
+                  <tr>
+
+                    {ADMIN_COLUMNS.map(
+                      ([key, label]) => (
+
+                        <th key={key}>
+                          {label}
+                        </th>
+
+                      )
+                    )}
+
+                  </tr>
+
+                </thead>
+
+
+                <tbody>
+
+                  {adminRows.map((row) => (
+
+                    <tr key={row.annotation_id}>
+
+                      {ADMIN_COLUMNS.map(
+                        ([key]) => (
+
+                          <td key={key}>
+                            {humanize(row[key])}
+                          </td>
+
+                        )
+                      )}
+
+                    </tr>
+
+                  ))}
+
+                </tbody>
+
+              </table>
+
+            </div>
+
+          )}
+
+        </main>
+
+      </div>
+
+    );
+
+  }
 
 
   /* =======================================================

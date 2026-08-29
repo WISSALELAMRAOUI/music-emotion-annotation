@@ -542,6 +542,82 @@ def get_stats():
 
 
 
+# RESTITUTION DES RÉPONSES
+
+
+# Requête partagée par la page admin (JSON) et l'export (CSV).
+
+ANNOTATIONS_QUERY = """
+    SELECT
+        a.id                    AS annotation_id,
+        a.participant_id        AS participant_id,
+        p.age                   AS age,
+        p.gender                AS gender,
+        p.music_familiarity     AS music_familiarity,
+        p.cultural_familiarity  AS cultural_familiarity,
+        a.audio_id              AS audio_id,
+        a.audio_number          AS audio_number,
+        a.valence               AS valence,
+        a.arousal               AS arousal,
+        a.emotion               AS emotion,
+        a.cultural_nostalgia    AS cultural_nostalgia,
+        a.preferred_time        AS preferred_time,
+        a.tempo_mizan           AS tempo_mizan,
+        a.attention_element     AS attention_element,
+        a.created_at            AS created_at
+    FROM annotations a
+    LEFT JOIN participants p
+        ON p.participant_id = a.participant_id
+    ORDER BY a.participant_id, a.audio_number
+"""
+
+
+ANNOTATION_COLUMNS = [
+    "annotation_id",
+    "participant_id",
+    "age",
+    "gender",
+    "music_familiarity",
+    "cultural_familiarity",
+    "audio_id",
+    "audio_number",
+    "valence",
+    "arousal",
+    "emotion",
+    "cultural_nostalgia",
+    "preferred_time",
+    "tempo_mizan",
+    "attention_element",
+    "created_at"
+]
+
+
+@app.route("/api/annotations", methods=["GET"])
+def list_annotations():
+    """
+    Réponses collectées, au format JSON, pour la page admin.
+    """
+
+    denied = check_admin()
+
+    if denied is not None:
+        return denied
+
+
+    connection = get_connection()
+
+    rows = connection.execute(ANNOTATIONS_QUERY).fetchall()
+
+    connection.close()
+
+
+    return jsonify([
+        dict(row)
+        for row in rows
+    ])
+
+
+
 # API : EXPORT CSV
 
 
@@ -572,55 +648,13 @@ def export_annotations():
 
     connection = get_connection()
 
-    rows = connection.execute("""
-        SELECT
-            a.id                    AS annotation_id,
-            a.participant_id        AS participant_id,
-            p.age                   AS age,
-            p.gender                AS gender,
-            p.music_familiarity     AS music_familiarity,
-            p.cultural_familiarity  AS cultural_familiarity,
-            a.audio_id              AS audio_id,
-            a.audio_number          AS audio_number,
-            a.valence               AS valence,
-            a.arousal               AS arousal,
-            a.emotion               AS emotion,
-            a.cultural_nostalgia    AS cultural_nostalgia,
-            a.preferred_time        AS preferred_time,
-            a.tempo_mizan           AS tempo_mizan,
-            a.attention_element     AS attention_element,
-            a.created_at            AS created_at
-        FROM annotations a
-        LEFT JOIN participants p
-            ON p.participant_id = a.participant_id
-        ORDER BY a.participant_id, a.audio_number
-    """).fetchall()
+    rows = connection.execute(ANNOTATIONS_QUERY).fetchall()
 
     connection.close()
 
 
-    columns = [
-        "annotation_id",
-        "participant_id",
-        "age",
-        "gender",
-        "music_familiarity",
-        "cultural_familiarity",
-        "audio_id",
-        "audio_number",
-        "valence",
-        "arousal",
-        "emotion",
-        "cultural_nostalgia",
-        "preferred_time",
-        "tempo_mizan",
-        "attention_element",
-        "created_at"
-    ]
-
-
     return Response(
-        build_csv(rows, columns),
+        build_csv(rows, ANNOTATION_COLUMNS),
         mimetype="text/csv; charset=utf-8",
         headers={
             "Content-Disposition":

@@ -65,7 +65,26 @@ garantit donc un ordre de présentation stable.
 
 ---
 
-## Récupérer les données collectées
+## Consulter les réponses (espace chercheur)
+
+Une page protégée par mot de passe permet de suivre la collecte sans
+passer par le terminal :
+
+```
+http://localhost:5173/#admin
+```
+
+Le mot de passe demandé est la valeur de `ADMIN_TOKEN`. La page affiche le
+nombre de participants et de réponses, le tableau des annotations, et
+propose le téléchargement des CSV.
+
+Le mot de passe n'est jamais enregistré dans le navigateur : il reste en
+mémoire le temps de la consultation, et il faut le ressaisir après un
+rechargement de page.
+
+---
+
+## Récupérer les données en ligne de commande
 
 Les exports demandent le jeton défini par `ADMIN_TOKEN`, en paramètre
 d'URL ou via l'en-tête `X-Admin-Token` :
@@ -97,6 +116,7 @@ correctement à l'ouverture dans Excel.
 | GET     | `/api/audio/<fichier>`         | Lire un extrait                         |
 | POST    | `/api/participants`            | Créer un participant, renvoie son ID    |
 | POST    | `/api/annotations`             | Enregistrer une réponse                 |
+| GET     | `/api/annotations`             | Réponses en JSON *(jeton requis)*       |
 | GET     | `/api/stats`                   | Statistiques *(jeton requis)*           |
 | GET     | `/api/export/annotations.csv`  | Export des réponses *(jeton requis)*    |
 | GET     | `/api/export/participants.csv` | Export des profils *(jeton requis)*     |
@@ -130,7 +150,7 @@ désignés par un identifiant généré (`PXXXXXXXX`).
 
 | Variable            | Défaut                  | Rôle                                        |
 | ------------------- | ----------------------- | ------------------------------------------- |
-| `ADMIN_TOKEN`       | *(vide)*                | Jeton des exports. Vide = exports désactivés |
+| `ADMIN_TOKEN`       | *(vide)*                | Mot de passe de l'espace chercheur et des exports. Vide = consultation désactivée |
 | `PORT`              | `5000`                  | Port du backend                             |
 | `DATABASE_PATH`     | `backend/database.db`   | Emplacement de la base                      |
 | `AUDIO_FOLDER`      | `backend/audio`         | Dossier des extraits                        |
