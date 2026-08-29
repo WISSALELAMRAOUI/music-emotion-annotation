@@ -16,11 +16,16 @@ nostalgie culturelle, moment de la journée, mîzân, élément sonore).
 ## Démarrage rapide (Docker)
 
 ```bash
-# Le jeton protège le téléchargement des données collectées.
+# Le jeton protège l'accès aux données collectées.
 export ADMIN_TOKEN="choisissez-un-jeton-secret"
 
-docker compose up --build
+docker compose up -d --build
 ```
+
+Le frontend est **construit** puis servi par nginx. Les fichiers produits
+portent une empreinte de leur contenu dans leur nom
+(`index-DD_ZxyMl.css`) : après un déploiement, les navigateurs
+téléchargent forcément la nouvelle version, même derrière un cache.
 
 | Service  | URL                     |
 | -------- | ----------------------- |
@@ -28,6 +33,23 @@ docker compose up --build
 | Backend  | http://localhost:5000   |
 
 Pour arrêter : `docker compose down`
+
+> Le site étant construit au moment du `build`, **toute modification du
+> code demande de reconstruire** : `docker compose up -d --build`.
+
+---
+
+## Développer avec rechargement à chaud
+
+Pour travailler sur le code sans reconstruire à chaque changement,
+ajoutez la surcouche de développement, qui lance le serveur Vite :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+```
+
+Le dossier `frontend/` est alors monté dans le conteneur et chaque
+modification s'affiche immédiatement.
 
 ---
 
@@ -154,7 +176,7 @@ désignés par un identifiant généré (`PXXXXXXXX`).
 | `PORT`              | `5000`                  | Port du backend                             |
 | `DATABASE_PATH`     | `backend/database.db`   | Emplacement de la base                      |
 | `AUDIO_FOLDER`      | `backend/audio`         | Dossier des extraits                        |
-| `VITE_BACKEND_URL`  | `http://localhost:5000` | URL du backend appelée par le navigateur    |
+| `VITE_BACKEND_URL`  | `http://localhost:5000` | URL du backend appelée par le navigateur. **Figée au build** en production |
 
 > `VITE_BACKEND_URL` est lue **par le navigateur du participant**. En
 > déploiement, utilisez l'adresse publique du backend — jamais le nom de
@@ -164,6 +186,18 @@ désignés par un identifiant généré (`PXXXXXXXX`).
 
 ## Mise en ligne
 
-Le backend tourne ici avec le serveur de développement de Flask, suffisant
-pour une collecte en local ou en salle. Pour une étude ouverte sur Internet,
-servez-le derrière un serveur WSGI (`gunicorn`) et en HTTPS.
+Le frontend est servi par nginx à partir des fichiers construits : c'est
+la configuration adaptée à une étude ouverte au public.
+
+Le backend, lui, tourne encore avec le serveur de développement de Flask.
+C'est suffisant pour une collecte en local ou en salle ; pour une étude
+ouverte sur Internet, servez-le derrière un serveur WSGI (`gunicorn`)
+et en HTTPS.
+
+### Derrière un reverse proxy
+
+Si un proxy (nginx, openresty, Traefik…) se trouve devant le site,
+laissez-le **respecter les en-têtes du serveur** ou, au minimum, ne pas
+forcer de durée de cache sur `index.html`. Les fichiers de `assets/`
+peuvent être mis en cache aussi longtemps que souhaité : leur nom change
+à chaque modification.

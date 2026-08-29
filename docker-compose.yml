@@ -16,16 +16,17 @@ services:
   frontend:
     build:
       context: ./frontend
+      # Étape "production" : le site est construit puis servi par nginx.
+      # Les fichiers portent une empreinte dans leur nom, donc aucun
+      # cache ne peut servir une ancienne version.
+      target: production
       args:
+        # Figée au moment du build : après un changement d'URL,
+        # relancez "docker compose up -d --build".
         VITE_BACKEND_URL: ${VITE_BACKEND_URL}
     container_name: music-emotion-frontend
     depends_on:
       - backend
-    environment:
-      VITE_BACKEND_URL: ${VITE_BACKEND_URL}
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     networks:
       - proxy_network
     restart: unless-stopped
